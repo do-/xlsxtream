@@ -1,0 +1,17 @@
+{
+  "name": "xlsxtream",
+  "version": "1.0.0",
+  "description": "Streaming tools for .xlsx archives members",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "author": "Dmitry Ovsyanko",
+  "license": "ISC",
+  "devDependencies": {
+    "jest": "^24.9.0"
+  },
+  "dependencies": {
+    "sax": "^1.2.4"
+  }
+}
