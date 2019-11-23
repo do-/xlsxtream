@@ -6,6 +6,10 @@
   "scripts": {
     "test": "jest"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/do-/xlsxtream.git"
+  },
   "author": "Dmitry Ovsyanko",
   "license": "ISC",
   "devDependencies": {
