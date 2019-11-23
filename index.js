@@ -155,6 +155,37 @@ xxx.getValue = function (workbook, cell) {
 	
 }
 
+xxx.getSheetDimensions = async function (workbook, name) {
+
+	let path = (workbook.sheets || {}) [name] || name
+
+	let reader = workbook.streamProvider (path)
+	
+	let ss = sax.createStream (true, workbook.saxOptions)
+	
+	return new Promise ((ok, fail) => {
+		
+		let dim
+				
+		ss.on ("opentag", node => {
+			if (node.name == 'dimension') {
+				let p = node.attributes.ref.split (':')
+				if (p.length == 1) p [1] = p [0]
+				dim = p.map (xxx.toRC)
+				reader.destroy ()
+				ok (dim)
+			}
+		})
+
+		reader.on   ('end', ok)
+		reader.on   ('error', (e) => dim ? ok (dim) : fail (e))
+
+		reader.pipe (ss)
+		
+	})				
+
+}
+
 xxx.scanSheetRows = async function (workbook, name, callBack) {
 
 	let path = (workbook.sheets || {}) [name] || name
