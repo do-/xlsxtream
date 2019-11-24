@@ -98,11 +98,28 @@ xxx.scanSheets = async function (streamProvider, callBack, saxOptions = {}) {
 
 	return new Promise ((ok, fail) => {
 
-		ss.on ("opentag",  node => {
-			if (node.name == 'sheet') {
-				let a = node.attributes
-				callBack (a.name, `xl/worksheets/sheet${a.sheetId}.xml`)
-			}
+		ss.on ("opentag", node => {
+			if (node.name == 'sheet') callBack (node.attributes)
+		})
+
+		reader.on   ('end', ok)
+		reader.on   ('error', fail)		
+		reader.pipe (ss)
+
+	})
+
+}
+
+xxx.scanRels = async function (streamProvider, callBack, saxOptions = {}) {
+
+	let reader = streamProvider ('xl/_rels/workbook.xml.rels')
+
+	let i = 0, ss = sax.createStream (true, saxOptions)
+
+	return new Promise ((ok, fail) => {
+
+		ss.on ("opentag", node => {
+			if (node.name == 'Relationship') callBack (node.attributes)
 		})
 
 		reader.on   ('end', ok)
@@ -117,8 +134,12 @@ xxx.getSheetsAsObject = async function (streamProvider, saxOptions = {}) {
 
 	let o = {}
 	
-	await xxx.scanSheets (streamProvider, (k, v) => o [k] = v, saxOptions)
+	let idx = {}
 	
+	await xxx.scanSheets (streamProvider, a => idx [a ['r:id']] = a.name, saxOptions)
+
+	await xxx.scanRels (streamProvider, a => {if (a.Id in idx) o [idx [a.Id]] = 'xl/' + a.Target}, saxOptions)
+
 	return o
 
 }
