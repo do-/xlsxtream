@@ -2,10 +2,10 @@ const sax = require ('sax')
 
 let xxx = module.exports = {}
 
-const ordA = 'A'.charCodeAt (0) - 1
-
 xxx.fromAZ = function (s) {
 
+	const ordA = 'A'.charCodeAt (0) - 1
+	
 	let n = 0
 	
 	for (let i = 0; i < s.length; i ++) {	
@@ -28,27 +28,41 @@ xxx.toRC = function (s) {
 
 }
 
-xxx.scanVocabulary = async function (streamProvider, callBack, saxOptions = {}) {
-	
-	let reader = streamProvider ('xl/sharedStrings.xml')
+xxx.scan = async function (streamProvider, path, handler, saxOptions = {}) {
 
-	let i = 0, ss = sax.createStream (true, saxOptions)
+	let reader = streamProvider (path)
+
+	let ss = sax.createStream (true, saxOptions)
+	
+	ss.__stream = reader
 
 	return new Promise ((ok, fail) => {
+	
+		for (let event in handler) ss.on (event, handler [event])
 
-		let t
-
-		ss.on ("opentag",  node => {if (node.name == 'si') t = ''})
-		ss.on ("text",     text => t += text)
-		ss.on ("closetag", name => {if (name == 'si') callBack (t, i ++)})
-
-		reader.on   ('end', ok)
+		reader.on   ('close', ok)
 		reader.on   ('error', fail)
 		
 		reader.pipe (ss)
 
-	})
+	})	
 
+}
+
+xxx.scanVocabulary = async function (streamProvider, callBack, saxOptions = {}) {
+
+	let t = '', i = 0
+
+	return xxx.scan (streamProvider, 'xl/sharedStrings.xml', {
+
+		opentag:  node => {if (node.name == 'si') t = ''},
+
+		text:     text => t += text,
+
+		closetag: name => {if (name == 'si') callBack (t, i ++)},		
+
+	}, saxOptions)
+	
 }
 
 xxx.getVocabularyAsArray = async function (streamProvider, saxOptions = {}) {
@@ -62,21 +76,12 @@ xxx.getVocabularyAsArray = async function (streamProvider, saxOptions = {}) {
 }
 
 xxx.scanStyles = async function (streamProvider, callBack, saxOptions = {}) {
-	
-	let reader = streamProvider ('xl/styles.xml')
 
-	let i = 0, ss = sax.createStream (true, saxOptions)
+	return xxx.scan (streamProvider, 'xl/styles.xml', {
 
-	return new Promise ((ok, fail) => {
+		opentag:  node => {if (node.name == 'xf' && ('xfId' in node.attributes)) {callBack (node)}},
 
-		ss.on ("opentag",  node => {if (node.name == 'xf' && ('xfId' in node.attributes)) {callBack (node)}})
-
-		reader.on   ('end', ok)
-		reader.on   ('error', fail)
-		
-		reader.pipe (ss)
-
-	})
+	}, saxOptions)
 
 }
 
@@ -92,41 +97,21 @@ xxx.getStylesAsArray = async function (streamProvider, saxOptions = {}) {
 
 xxx.scanSheets = async function (streamProvider, callBack, saxOptions = {}) {
 
-	let reader = streamProvider ('xl/workbook.xml')
+	return xxx.scan (streamProvider, 'xl/workbook.xml', {
 
-	let i = 0, ss = sax.createStream (true, saxOptions)
+		opentag:  node => {if (node.name == 'sheet') callBack (node.attributes)},
 
-	return new Promise ((ok, fail) => {
-
-		ss.on ("opentag", node => {
-			if (node.name == 'sheet') callBack (node.attributes)
-		})
-
-		reader.on   ('end', ok)
-		reader.on   ('error', fail)		
-		reader.pipe (ss)
-
-	})
+	}, saxOptions)
 
 }
 
 xxx.scanRels = async function (streamProvider, callBack, saxOptions = {}) {
 
-	let reader = streamProvider ('xl/_rels/workbook.xml.rels')
+	return xxx.scan (streamProvider, 'xl/_rels/workbook.xml.rels', {
 
-	let i = 0, ss = sax.createStream (true, saxOptions)
+		opentag:  node => {if (node.name == 'Relationship') callBack (node.attributes)},
 
-	return new Promise ((ok, fail) => {
-
-		ss.on ("opentag", node => {
-			if (node.name == 'Relationship') callBack (node.attributes)
-		})
-
-		reader.on   ('end', ok)
-		reader.on   ('error', fail)		
-		reader.pipe (ss)
-
-	})
+	}, saxOptions)
 
 }
 
@@ -177,76 +162,62 @@ xxx.getValue = function (workbook, cell) {
 }
 
 xxx.getSheetDimensions = async function (workbook, name) {
+	let dim
+	await xxx.scanSheetDimensions (workbook, name, (v => dim = v))
+	return dim
+}
 
-	let path = (workbook.sheets || {}) [name] || name
+xxx.scanSheetDimensions = async function (workbook, name, callback) {
 
-	let reader = workbook.streamProvider (path)
-	
-	let ss = sax.createStream (true, workbook.saxOptions)
-	
-	return new Promise ((ok, fail) => {
-		
-		let dim
-				
-		ss.on ("opentag", node => {
+	return xxx.scan (workbook.streamProvider, (workbook.sheets || {}) [name] || name, {
+
+		opentag: function (node) {
+
 			if (node.name == 'dimension') {
 				let p = node.attributes.ref.split (':')
 				if (p.length == 1) p [1] = p [0]
-				dim = p.map (xxx.toRC)
-				reader.destroy ()
-				ok (dim)
+				callback (p.map (xxx.toRC))
+				this.__stream.destroy ()
 			}
-		})
+			
+		},
 
-		reader.on   ('end', ok)
-		reader.on   ('error', (e) => dim ? ok (dim) : fail (e))
-
-		reader.pipe (ss)
-		
-	})				
+	}, workbook.saxOptions)
 
 }
 
 xxx.scanSheetRows = async function (workbook, name, callBack) {
 
-	let path = (workbook.sheets || {}) [name] || name
+	let row
+	let t
+	let cell
+	
+	return xxx.scan (workbook.streamProvider, (workbook.sheets || {}) [name] || name, {
 
-	let reader = workbook.streamProvider (path)
-	
-	let ss = sax.createStream (true, workbook.saxOptions)
-	
-	return new Promise ((ok, fail) => {
+		opentag: node => {switch (node.name) {
 		
-		let row
-		let t
-		let cell
+			case 'row': return row = []
+			
+			case 'c'  : return cell = node.attributes
+			
+			case 'v'  : return t   = ''
+		
+		}},
+
+		text:     text => t += text,
+
+		closetag: name => {switch (name) {
+		
+			case 'row' : return callBack (row)
+			
+			case 'v'   : 
+				cell.v = t
+				let [r, c] = xxx.toRC (cell.r)
+				cell.value = xxx.getValue (workbook, cell)
+				row [c - 1] = cell
 				
-		ss.on ("opentag", node => {
-			switch (node.name) {
-				case 'row': return row = []
-				case 'c'  : return cell = node.attributes
-				case 'v'  : return t   = ''
-			}
-		})
-		
-		ss.on ("text",     text => t += text)
-		
-		ss.on ("closetag", name => {
-			switch (name) {
-				case 'row' : return callBack (row)
-				case 'v'   : 
-					cell.v = t
-					let [r, c] = xxx.toRC (cell.r)
-					cell.value = xxx.getValue (workbook, cell)
-					row [c - 1] = cell
-			}
-		})
-	
-		reader.on   ('end', ok)
-		reader.on   ('error', fail)
-		
-		reader.pipe (ss)
-		
-	})				
+		}},
 
+	}, workbook.saxOptions)
+	
 }
