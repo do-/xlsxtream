@@ -206,9 +206,9 @@ xxx.scanSheetRows = async function (workbook, name, callBack) {
 
 		text:     text => t += text,
 
-		closetag: name => {switch (name) {
+		closetag: async name => {switch (name) {
 		
-			case 'row' : return callBack (row)
+			case 'row' : return await callBack (row)
 			
 			case 'v'   : 
 				cell.v = t

@@ -1,6 +1,6 @@
 {
   "name": "xlsxtream",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Streaming tools for .xlsx archives members",
   "main": "index.js",
   "scripts": {
