@@ -30,7 +30,7 @@ xxx.toRC = function (s) {
 
 xxx.scan = async function (streamProvider, path, handler, saxOptions = {}) {
 
-	let reader = streamProvider (path)
+	let reader = await streamProvider (path)
 
 	let ss = sax.createStream (true, saxOptions)
 	
@@ -208,7 +208,7 @@ xxx.scanSheetRows = async function (workbook, name, callBack) {
 
 		closetag: async name => {switch (name) {
 		
-			case 'row' : return await callBack (row)
+			case 'row' : return callBack (row)
 			
 			case 'v'   : 
 				cell.v = t
