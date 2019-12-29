@@ -40,8 +40,9 @@ xxx.scan = async function (streamProvider, path, handler, saxOptions = {}) {
 	
 		for (let event in handler) ss.on (event, handler [event])
 
-		reader.on   ('close', ok)
 		reader.on   ('error', fail)
+		reader.on   ('end', ok)
+		reader.on   ('close', ok)
 		
 		reader.pipe (ss)
 
