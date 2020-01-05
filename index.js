@@ -132,6 +132,25 @@ xxx.getSheetsAsObject = async function (streamProvider, saxOptions = {}) {
 
 xxx.getWorkbook = async function (streamProvider, saxOptions = {}) {
 
+	if (typeof streamProvider === 'object') {
+	
+		let o = streamProvider
+	
+		let clazz = o.constructor.name
+	
+		switch (clazz) {
+		
+			case 'StreamZip':			
+				streamProvider = p => new Promise ((ok, fail) => o.stream (p, (x, s) => x ? fail (x) : ok (s)))			
+				break
+			
+			default:
+				throw 'Unknown unzipper: ' + clazz
+		
+		}
+	
+	}
+
 	let voc = await xxx.getVocabularyAsArray (streamProvider, saxOptions)
 
 	return {
@@ -221,4 +240,31 @@ xxx.scanSheetRows = async function (workbook, name, callBack) {
 
 	}, workbook.saxOptions)
 	
+}
+
+xxx.openStreamZip = async function (zip, file) {
+
+	let zf = (await new Promise ((ok, fail) => {
+	
+		let z = new zip ({
+			file,
+			storeEntries: true,
+			skipEntryNameValidation: true,
+		})
+		.on ('error', fail)
+		.on ('ready', () => ok (z))
+		
+	})).on ('error', x => console.log (x))
+	
+	return zf
+	
+}
+
+xxx.open = async function (zip, file) {
+
+	let clazz = zip.name; switch (clazz) {
+		case 'StreamZip': return xxx.openStreamZip (zip, file)
+		default: throw 'Unknown unzipper class: ' + clazz
+	}
+
 }
