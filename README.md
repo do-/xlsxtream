@@ -15,10 +15,13 @@ npm install xlsxtream
 ## Basic usage
 
 ```
-const xxx = require ('xlsxtream')
-const fs  = require ('fs')        // may not be needed
+const xxx             = require ('xlsxtream')
+const fs              = require ('fs')              // may not be needed...
+// const zip_reader   = require ('node-stream-zip') // ...if you use this 
+// const zip_reader   = require ('unzipper')        // ...or this
 
-let streamProvider = (path) => fs.createReadStream (root + path) // or some unzipper
+let streamProvider    = (path) => fs.createReadStream (root + path) 
+// let streamProvider = await xxx.open (zip_reader, path) // if zip_reader is available
 
 let wb = await xxx.getWorkbook (streamProvider) // not OO, just a plain js <<Object>>:
   // {
@@ -55,7 +58,15 @@ For an .xlsx fully unzipped in a directory called `root`, the corresponding data
 (path) => fs.createReadStream (root + path)
 ```
 
-You can replace it with your favorite unzipper.
+There is a plethora of ZIP related modules in the npm ecosystem. Anyone is free to unzip things the brand new way in each new project. The `xlsxtream` module depends on none of those libraries, though, has wrappers for two of them:
+* https://www.npmjs.com/package/unzipper;
+* https://www.npmjs.com/package/node-stream-zip;
+
+```
+let streamProvider = await xxx.open (zip_reader, path)
+```
+
+where `zip_reader` is the module reference (usually the result of `const ... = require ...`).
 
 ### Reading common workbook information
 
