@@ -135,13 +135,19 @@ xxx.getWorkbook = async function (streamProvider, saxOptions = {}) {
 	if (typeof streamProvider === 'object') {
 	
 		let o = streamProvider
-	
+
 		let clazz = o.constructor.name
 	
 		switch (clazz) {
 		
 			case 'StreamZip':			
 				streamProvider = p => new Promise ((ok, fail) => o.stream (p, (x, s) => x ? fail (x) : ok (s)))			
+				break
+
+			case 'unzipper':			
+				streamProvider = p => {
+					for (let file of o.dir.files) if (file.path == p) return file.stream ()
+				}			
 				break
 			
 			default:
@@ -262,8 +268,18 @@ xxx.openStreamZip = async function (zip, file) {
 
 xxx.open = async function (zip, file) {
 
-	let clazz = zip.name; switch (clazz) {
+	let clazz = zip.name
+	
+	if (!clazz) {
+		if (zip.Open && zip.Open.s3) clazz = 'unzipper'
+	}
+	
+	switch (clazz) {
 		case 'StreamZip': return xxx.openStreamZip (zip, file)
+		case 'unzipper': return {
+			constructor: {name: 'unzipper'},
+			dir: await zip.Open.file (file),
+		}
 		default: throw 'Unknown unzipper class: ' + clazz
 	}
 
