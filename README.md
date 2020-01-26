@@ -4,7 +4,9 @@ This is a set of ES7 async functions for reading .xlsx files (Excel 2007) using 
 
 The module operates on individual ZIP members in form of readable streams.
 
-It doesen't rely on any specific unzipper. Its only exernal dependency is `sax`.
+It doesen't rely on any specific unzipper. 
+
+The only external dependency is `Saxophone`. Versions prior to 1.0.10 used ~30000 times more popular, but 10+ times slower `sax-js`.
 
 ## Installation
 
@@ -26,7 +28,6 @@ let streamProvider    = (path) => fs.createReadStream (root + path)
 let wb = await xxx.getWorkbook (streamProvider) // not OO, just a plain js <<Object>>:
   // {
   //   streamProvider,
-  //   saxOptions,
   //   sheets: {"Sheet One": "xl/worksheets/sheet1.xml", ...},
   //   styles: [0, 14, ...],         // from xl/styles.xml, to detect date/time cells
   //   stringResolver: s => voc [s], // from xl/sharedStrings.xml, to decode strings 
@@ -77,7 +78,6 @@ let wb = await xxx.getWorkbook (streamProvider)
 
   // {
   //   streamProvider,
-  //   saxOptions,
   //   sheets: {"Sheet One": "xl/worksheets/sheet1.xml", ...},
   //   styles: [0, 14, ...],         
   //   stringResolver: s => voc [s], 
@@ -122,11 +122,11 @@ It's crucial for decoding date/time data because such cells are marked only with
 The method for reading styles is
 
 ```
-xxx.getStylesAsArray = async function (streamProvider, saxOptions = {}) {
+xxx.getStylesAsArray = async function (streamProvider) {
   let a = []
   await xxx.scanStyles (streamProvider, node => 
     a.push (parseInt (node.attributes.numFmtId)
-  ), saxOptions)
+  ))
   return a
 }
 ```
@@ -189,7 +189,7 @@ The `An` corresponds to th [0]th element, `Bn` to the [1]st one and so on. Regar
 
 Empty cells may look like `null`s.
 
-Non empty cells are copies of `sax` provided attribute sets for `<c>` nodes with attitional `value` components containing decoded content.
+Non empty cells are copies of attribute sets of `<c>` nodes with attitional `value` components containing decoded content.
 
 ```
 {

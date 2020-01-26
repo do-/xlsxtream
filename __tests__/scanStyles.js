@@ -1,5 +1,6 @@
 const xxx = require ('../index.js')
 const fs  = require ('fs')
+const Saxophone = require ('saxophone')
 
 test ('scanStyles', async () => {
 
@@ -9,7 +10,7 @@ test ('scanStyles', async () => {
 	
 		(path) => fs.createReadStream ('./__data__/' + path),
 		
-		(node) => n += parseInt (node.attributes.numFmtId)
+		(node) => n += parseInt (Saxophone.parseAttrs (node.attrs).numFmtId)
 	
 	)
 

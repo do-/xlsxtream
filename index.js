@@ -1,4 +1,4 @@
-const sax = require ('sax')
+const Saxophone = require ('saxophone')
 
 let xxx = module.exports = {}
 
@@ -28,11 +28,11 @@ xxx.toRC = function (s) {
 
 }
 
-xxx.scan = async function (streamProvider, path, handler, saxOptions = {}) {
+xxx.scan = async function (streamProvider, path, handler) {
 
 	let reader = await streamProvider (path)
 
-	let ss = sax.createStream (true, saxOptions)
+	let ss = new Saxophone ()		
 	
 	ss.__stream = reader
 
@@ -50,87 +50,87 @@ xxx.scan = async function (streamProvider, path, handler, saxOptions = {}) {
 
 }
 
-xxx.scanVocabulary = async function (streamProvider, callBack, saxOptions = {}) {
+xxx.scanVocabulary = async function (streamProvider, callBack) {
 
 	let t = '', i = 0
 
 	return xxx.scan (streamProvider, 'xl/sharedStrings.xml', {
 
-		opentag:  node => {if (node.name == 'si') t = ''},
+		tagopen:  node => {if (node.name == 'si') t = ''},
 
-		text:     text => t += text,
+		text:     text => t += Saxophone.parseEntities (text.contents),
 
-		closetag: name => {if (name == 'si') callBack (t, i ++)},		
+		tagclose: node => {if (node.name == 'si') callBack (t, i ++)},		
 
-	}, saxOptions)
+	})
 	
 }
 
-xxx.getVocabularyAsArray = async function (streamProvider, saxOptions = {}) {
+xxx.getVocabularyAsArray = async function (streamProvider) {
 
 	let a = []
 	
-	await xxx.scanVocabulary (streamProvider, t => a.push (t), saxOptions)
+	await xxx.scanVocabulary (streamProvider, t => a.push (t))
 	
 	return a
 
 }
 
-xxx.scanStyles = async function (streamProvider, callBack, saxOptions = {}) {
+xxx.scanStyles = async function (streamProvider, callBack) {
 
 	return xxx.scan (streamProvider, 'xl/styles.xml', {
 
-		opentag:  node => {if (node.name == 'xf' && ('xfId' in node.attributes)) {callBack (node)}},
+		tagopen:  node => {if (node.name == 'xf' && ('xfId' in Saxophone.parseAttrs (node.attrs))) {callBack (node)}},
 
-	}, saxOptions)
+	})
 
 }
 
-xxx.getStylesAsArray = async function (streamProvider, saxOptions = {}) {
+xxx.getStylesAsArray = async function (streamProvider) {
 
 	let a = []
 	
-	await xxx.scanStyles (streamProvider, node => a.push (parseInt (node.attributes.numFmtId)), saxOptions)
+	await xxx.scanStyles (streamProvider, node => a.push (parseInt (Saxophone.parseAttrs (node.attrs).numFmtId)))
 	
 	return a
 
 }
 
-xxx.scanSheets = async function (streamProvider, callBack, saxOptions = {}) {
+xxx.scanSheets = async function (streamProvider, callBack) {
 
 	return xxx.scan (streamProvider, 'xl/workbook.xml', {
 
-		opentag:  node => {if (node.name == 'sheet') callBack (node.attributes)},
+		tagopen:  node => {if (node.name == 'sheet') callBack (Saxophone.parseAttrs (node.attrs))},
 
-	}, saxOptions)
+	})
 
 }
 
-xxx.scanRels = async function (streamProvider, callBack, saxOptions = {}) {
+xxx.scanRels = async function (streamProvider, callBack) {
 
 	return xxx.scan (streamProvider, 'xl/_rels/workbook.xml.rels', {
 
-		opentag:  node => {if (node.name == 'Relationship') callBack (node.attributes)},
+		tagopen:  node => {if (node.name == 'Relationship') callBack (Saxophone.parseAttrs (node.attrs))},
 
-	}, saxOptions)
+	})
 
 }
 
-xxx.getSheetsAsObject = async function (streamProvider, saxOptions = {}) {
+xxx.getSheetsAsObject = async function (streamProvider) {
 
 	let o = {}
 	
 	let idx = {}
 	
-	await xxx.scanSheets (streamProvider, a => idx [a ['r:id']] = a.name, saxOptions)
+	await xxx.scanSheets (streamProvider, a => idx [a ['r:id']] = a.name)
 
-	await xxx.scanRels (streamProvider, a => {if (a.Id in idx) o [idx [a.Id]] = 'xl/' + a.Target}, saxOptions)
+	await xxx.scanRels (streamProvider, a => {if (a.Id in idx) o [idx [a.Id]] = 'xl/' + a.Target})
 
 	return o
 
 }
 
-xxx.getWorkbook = async function (streamProvider, saxOptions = {}) {
+xxx.getWorkbook = async function (streamProvider) {
 
 	if (typeof streamProvider === 'object') {
 	
@@ -157,13 +157,12 @@ xxx.getWorkbook = async function (streamProvider, saxOptions = {}) {
 	
 	}
 
-	let voc = await xxx.getVocabularyAsArray (streamProvider, saxOptions)
+	let voc = await xxx.getVocabularyAsArray (streamProvider)
 
 	return {
 		streamProvider,
-		saxOptions,
-		sheets: await xxx.getSheetsAsObject (streamProvider, saxOptions),
-		styles: await xxx.getStylesAsArray  (streamProvider, saxOptions),
+		sheets: await xxx.getSheetsAsObject (streamProvider),
+		styles: await xxx.getStylesAsArray  (streamProvider),
 		stringResolver: s => voc [s],
 	}
 
@@ -197,10 +196,10 @@ xxx.scanSheetDimensions = async function (workbook, name, callback) {
 
 	return xxx.scan (workbook.streamProvider, (workbook.sheets || {}) [name] || name, {
 
-		opentag: function (node) {
+		tagopen: function (node) {
 
 			if (node.name == 'dimension') {
-				let p = node.attributes.ref.split (':')
+				let p = Saxophone.parseAttrs (node.attrs).ref.split (':')
 				if (p.length == 1) p [1] = p [0]
 				callback (p.map (xxx.toRC))
 				this.__stream.destroy ()
@@ -208,7 +207,7 @@ xxx.scanSheetDimensions = async function (workbook, name, callback) {
 			
 		},
 
-	}, workbook.saxOptions)
+	})
 
 }
 
@@ -220,19 +219,19 @@ xxx.scanSheetRows = async function (workbook, name, callBack) {
 	
 	return xxx.scan (workbook.streamProvider, (workbook.sheets || {}) [name] || name, {
 
-		opentag: node => {switch (node.name) {
+		tagopen: node => {switch (node.name) {
 		
 			case 'row': return row = []
 			
-			case 'c'  : return cell = node.attributes
+			case 'c'  : return cell = Saxophone.parseAttrs (node.attrs)
 			
 			case 'v'  : return t   = ''
 		
 		}},
 
-		text:     text => t += text,
+		text:     text => t += Saxophone.parseEntities (text.contents),
 
-		closetag: async name => {switch (name) {
+		tagclose: async node => {switch (node.name) {
 		
 			case 'row' : return callBack (row)
 			
@@ -244,7 +243,7 @@ xxx.scanSheetRows = async function (workbook, name, callBack) {
 				
 		}},
 
-	}, workbook.saxOptions)
+	})
 	
 }
 
