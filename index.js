@@ -179,6 +179,7 @@ xxx.getValue = function (workbook, cell) {
 		case 15:
 			let d = new Date ('1900-01-01')
 			d.setDate (parseInt (v))
+			d.setMinutes (d.getTimezoneOffset ())
 			v = d.toJSON ().slice (0, 10)
 	}
 		
