@@ -29,4 +29,4 @@ for await (const [A, B, C] of rows) {
 */
 ```
 
-See the projetc's [wiki docs](https://github.com/do-/xlsxtream/wiki) for more information.
+See the project's [wiki docs](https://github.com/do-/xlsxtream/wiki) for more information.
