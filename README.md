@@ -1,3 +1,6 @@
+![workflow](https://github.com/do-/xlsxtream/actions/workflows/main.yml/badge.svg)
+![Jest coverage](./badges/coverage-jest%20coverage.svg)
+
 `xlsxtream` is a module for reading tabulated data from `.xlsx` (and, in general, [OOXML](https://en.wikipedia.org/wiki/Office_Open_XML)) workbooks using node.js [streams API](https://nodejs.org/dist/latest/docs/api/stream.html). 
 
 Only common workbook data (including the shared strings list) are kept in memory; worksheets contents is read row by row using a chain of [transform streams](https://nodejs.org/dist/latest/docs/api/stream.html#class-streamtransform).
