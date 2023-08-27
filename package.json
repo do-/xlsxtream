@@ -1,10 +1,23 @@
 {
   "name": "xlsxtream",
-  "version": "1.0.11",
-  "description": "Streaming tools for .xlsx archives members",
+  "version": "2.0.0",
+  "description": "Reading .xlsx worksheets as object streams",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "test-ci": "jest --ci --coverage"
+  },
+  "jest": {
+	"collectCoverageFrom": [
+		"lib/**/*.js"
+	],
+	"coverageReporters": ["clover", "json", "lcov", "text", "json-summary"],
+  	"verbose": false,
+  	"testPathIgnorePatterns": [
+  		"/node_modules/",
+  		"/__tests__/data",
+  		"/__tests__/lib"
+  	]
   },
   "repository": {
     "type": "git",
@@ -13,11 +26,10 @@
   "author": "Dmitry Ovsyanko",
   "license": "ISC",
   "devDependencies": {
-    "unzipper": "^0.10.5",
-    "node-stream-zip": "^1.8.2",
-    "jest": "^24.9.0"
+    "jest": "^29.3.1"
   },
   "dependencies": {
-    "saxophone": "^0.6.1"
+    "unzippo": "^1.0.2",
+    "xml-toolkit": "^1.0.36"
   }
 }
