@@ -15,9 +15,10 @@ test ('2_____with_chart', async () => {
 
 test ('file_example_XLSX_10', async () => {
 
-	const wb = await xlsx.open ('__data__/file_example_XLSX_10.xlsx')	
+	const wb = await xlsx.open ('__data__/file_example_XLSX_10.xlsx')
+	expect (wb.sharedStrings.at (-1)).toBe ('')
+
 	const ws = wb.sheets [0]
-	
 	const ns = await ws.getObjectStream ()
 	
 	const a = []; for await (n of ns) {
