@@ -1,6 +1,6 @@
 {
   "name": "xlsxtream",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Reading .xlsx worksheets as object streams",
   "main": "index.js",
   "files": [
@@ -34,6 +34,6 @@
   },
   "dependencies": {
     "unzippo": "^1.0.2",
-    "xml-toolkit": "^1.0.45"
+    "xml-toolkit": "^1.0.46"
   }
 }
