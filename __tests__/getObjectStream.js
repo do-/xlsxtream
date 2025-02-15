@@ -1,4 +1,3 @@
-const {XMLNode} = require ('xml-toolkit')
 const xlsx = require ('..')
 
 test ('2_____with_chart', async () => {
@@ -73,5 +72,20 @@ test ('inlineStr', async () => {
 	}
 
 	expect (a).toStrictEqual ([['A', 'B', 'C'], ['1.0', '2.0', '3.0'], ['4.0', '5.0', '6.0']])
+ 	
+})
+
+test ('skip', async () => {
+
+	const wb = await xlsx.open ('__data__/d1.xlsx')	
+	const ws = wb.sheets [0]
+	
+	const ns = await ws.getObjectStream ()
+	
+	const a = []; for await (n of ns) {
+		a.push (n)
+	}
+
+	expect (a).toStrictEqual ([['', '', '', 'D1']])
  	
 })

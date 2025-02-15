@@ -1,4 +1,4 @@
-const {toYMD} = require ('../lib/DateTimeUtils.js')
+const {toYMD} = require ('../lib/Utils.js')
 
 test ('basic', async () => {
 

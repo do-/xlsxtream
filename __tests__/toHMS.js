@@ -1,4 +1,4 @@
-const {toHMS} = require ('../lib/DateTimeUtils.js')
+const {toHMS} = require ('../lib/Utils.js')
 
 test ('basic', async () => {
 
