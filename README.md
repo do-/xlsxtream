@@ -49,4 +49,4 @@ The original `exceljs` API is synchronous and presumes the complete data tree to
 The present module, `xlsxtream` takes the opposite approach: it uses the [streams API](https://nodejs.org/dist/latest/docs/api/stream.html) from the ground up, focuses on keeping the memory footprint as little as possible and letting the developer avoid every single operation not required by the task to perform. To this end, `xlsxtream`:
 * reads individual files from ZIP archives with [`node-stream-zip`](https://www.npmjs.com/package/node-stream-zip);
 * transforms them into filtered streams of XML nodes with [`xml-toolkit`](https://www.npmjs.com/package/xml-toolkit);
-* use [lazy iterators](https://github.com/do-/xlsxtream/wiki/Row) to access just the necessary cells' data.
+* provides [lazy iterators](https://github.com/do-/xlsxtream/wiki/Row) to access just the necessary cells' data.
