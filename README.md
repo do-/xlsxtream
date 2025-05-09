@@ -29,9 +29,9 @@ for await (const [A, B, C] of stringArrays) {
 
 // advanced processing
 const rows = await ws.getRowStream ()
-for await (const row of rows) {
-  console.log (`Logical #${row.index}, physical #${row.num}`)
-  for (const cell of cells) {
+for await (const row of rows) {    // see https://github.com/do-/xlsxtream/wiki/Row
+//console.log (`Logical #${row.index}, physical #${row.num}`)
+  for (const cell of row.cells) {  // see https://github.com/do-/xlsxtream/wiki/Cell
     if (cell === null) {
       // empty cell, missing from XML
     }
