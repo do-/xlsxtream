@@ -35,3 +35,23 @@ test ('err', async () => {
 	}
 		
 })
+
+test ('sharedStrings: multiple t', async () => {
+
+	const wb = await xlsx.open ('__data__/oktmo.xlsx')	
+
+    const rows = await wb.sheets [0].getRowStream ()                        
+
+    ROWS: for await (const {index, cells} of rows) if (index === 3) {
+
+		for (const cell of cells) if (cell && cell.index == 4) {
+
+			const v = cell.valueOf ()
+			
+			expect (v).toBe ('08509000001')
+
+		}
+
+	}
+		
+})
