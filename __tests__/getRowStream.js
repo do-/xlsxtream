@@ -55,3 +55,23 @@ test ('sharedStrings: multiple t', async () => {
 	}
 		
 })
+
+test ('sharedStrings: absolute path', async () => {
+
+	const wb = await xlsx.open ('__data__/gd.xlsx')	
+
+    const rows = await wb.sheets [0].getRowStream ()                        
+
+    ROWS: for await (const {index, cells} of rows) if (index === 15) {
+
+		for (const cell of cells) if (cell && cell.index == 3) {
+
+			const v = cell.valueOf ()
+			
+			expect (v).toBe ('20')
+
+		}
+
+	}
+		
+})
