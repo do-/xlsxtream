@@ -1,6 +1,6 @@
 const xlsx = require ('..')
 
-test ('2_____with_chart', async () => {
+test ('loreyna', async () => {
 
 	const wb = await xlsx.open ('__data__/1_____loreyna126.xlsx')	
 	const ws = wb.sheetByName.POST_DSENDS
@@ -65,12 +65,27 @@ test ('sharedStrings: absolute path', async () => {
     ROWS: for await (const {index, cells} of rows) if (index === 15) {
 
 		for (const cell of cells) if (cell && cell.index == 3) {
-
-			const v = cell.valueOf ()
 			
-			expect (v).toBe ('20')
+			expect (cell.valueOf ()).toBe ('20')
+
+			expect (cell.formula).toBeUndefined ()
 
 		}
+
+	}
+		
+})
+
+test ('fmla', async () => {
+
+	const wb = await xlsx.open ('__data__/3_____invalid_formular.xlsx')	
+	const ws = wb.sheets [0]
+	
+	const r = await ws.getLastRow ()
+
+	for (const cell of r.cells) if (cell && cell.index == 1) {
+
+		expect (cell.formula).toBe ('"a"+0')
 
 	}
 		
