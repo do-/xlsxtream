@@ -1,6 +1,6 @@
 {
   "name": "xlsxtream",
-  "version": "2.0.6",
+  "version": "2.0.7",
   "description": "Reading .xlsx worksheets as object streams",
   "main": "index.js",
   "files": [
